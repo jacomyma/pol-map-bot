@@ -1,0 +1,29 @@
+{
+  "name": "pol-map-bot",
+  "version": "0.0.0",
+  "description": "Twitter bot",
+  "type": "module",
+  "dependencies": {
+    "dotenv": "^16.0.2",
+    "fs": "0.0.1-security",
+    "twitter-api-v2": "^1.12.8",
+    "winston": "^3.8.2"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jacomyma/pol-map-bot.git"
+  },
+  "keywords": [
+    "twitter",
+    "bot"
+  ],
+  "author": "Mathieu Jacomy",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/jacomyma/pol-map-bot/issues"
+  },
+  "homepage": "https://github.com/jacomyma/pol-map-bot#readme"
+}
