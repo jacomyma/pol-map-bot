@@ -1,7 +1,5 @@
 import { createLogger, format, transports } from "winston";
 // import * as fs from "fs";
-// import Twit from "twit";
-// import { Client, auth } from "twitter-api-sdk";
 import { TwitterApi } from 'twitter-api-v2';
 import dotenv from "dotenv";
 
@@ -49,7 +47,7 @@ export async function tweet_test() {
 		});
 		const rwClient = userClient.readWrite
 
-		tweet(rwClient, "Salut la Terre !")
+		// tweet(rwClient, "Salut la Terre !")
 				
 		return {success:true, msg:`Task succesful: tweet test.`}
 
