@@ -5,7 +5,7 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-export async function prepare_twitter_carto(date) {
+export async function prepare_twitter_carto(date, forceMode) {
 
 	const targetDate = ((date === undefined)?(new Date() /*Now*/):(new Date(date)))
 	const year = targetDate.getFullYear()
@@ -34,16 +34,29 @@ export async function prepare_twitter_carto(date) {
 	  ],
 	});
 
-	logger.info('***** RUN SCRIPT ****');
+	logger.on('error', function (err) { console.log("Logger error :(") });
 
 	// MAIN
 	async function main() {
+		logger.info('***** RUN SCRIPT ****');
 
 		// Folders
 		const sourceFolder = `${process.env.DATA_SOURCE_FOLDER}/${year}/${month}/${datem}`
 		const targetFolder = `${process.env.DATA_TARGET_FOLDER}/${year}/${month}/${datem}`
 		if (!fs.existsSync(targetFolder)){
 		    fs.mkdirSync(targetFolder, { recursive: true });
+		}
+
+		// Check if the target file exists.
+		// If so, and if not force mode, then just ship it.
+		const targetFile = `${targetFolder}/daily-carto.jpg`
+		if (!forceMode && fs.existsSync(targetFile)) {
+			logger
+				.info(`Daily carto saved for the ${year}-${month}-${datem}.`);
+			return new Promise((resolve, reject) => {
+				logger.once('finish', () => resolve({success:true, file:targetFile, msg:`Daily carto existing for the ${year}-${month}-${datem}.`}));
+				logger.end();
+		  });
 		}
 		
 		// Canvas
@@ -81,32 +94,25 @@ export async function prepare_twitter_carto(date) {
 		}
 
 		// Save the image in the target repository
-		const targetFileLegend = `${targetFolder}/daily-carto.png`
-		let imgd = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height)
-	  const out = fs.createWriteStream(targetFileLegend)
-	  const stream = canvas.createPNGStream()
-	  stream.pipe(out)
-	  out.on('finish', () => {
-	  	// Check that the file indeed exists
-	  	if (fs.existsSync(targetFileLegend)) {
-	  		logger
-					.info(`Daily carto saved for the ${year}-${month}-${datem}.`);
-		  
-				return new Promise((resolve, reject) => {
-					logger.once('finish', () => resolve({success:true, msg:`Daily carto saved for the ${year}-${month}-${datem}.`}));
-					logger.end();					
-			  });
-			} else {
-				logger
-					.error(`Error: the daily carto could not be saved for the ${year}-${month}-${datem}.`);
-				return new Promise((resolve, reject) => {
-					logger.once('finish', () => resolve({success:false, msg:`An error occurred when saving the PNG for the ${year}-${month}-${datem}.`}));
-					logger.end();
-			  });
-			}
-	  })
 
-
+		let buffer = canvas.toBuffer('image/jpeg')
+		try {
+			fs.writeFileSync(targetFile, buffer, "binary")
+			logger
+				.info(`Daily carto saved for the ${year}-${month}-${datem}.`);
+	  
+			return new Promise((resolve, reject) => {
+				logger.once('finish', () => resolve({success:true, file:targetFile, msg:`Daily carto saved for the ${year}-${month}-${datem}.`}));
+				logger.end();					
+		  });
+		} catch (error) {
+			logger
+				.error(`Error: the daily carto could not be saved for the ${year}-${month}-${datem}.`);
+			return new Promise((resolve, reject) => {
+				logger.once('finish', () => resolve({success:false, msg:`An error occurred when saving the PNG for the ${year}-${month}-${datem}.`}));
+				logger.end();
+		  });
+		}
 	}
 
 	return main();
