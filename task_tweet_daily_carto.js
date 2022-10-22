@@ -1,6 +1,7 @@
 import { createLogger, format, transports } from "winston";
 // import * as fs from "fs";
 import { TwitterApi } from 'twitter-api-v2';
+import * as fs from "fs";
 import dotenv from "dotenv";
 import { prepare_twitter_carto } from "./prepare_twitter_carto.js";
 
@@ -56,7 +57,17 @@ async function main() {
 		})
 
 		.then(() => {
-			return tweetCarto(dailyCartoFile)
+			if (dailyCartoFile) {
+				if (fs.existsSync(dailyCartoFile)) {
+					return tweetCarto(dailyCartoFile)
+				} else {
+					logger
+						.error('Could not tweet because the image path is invalid (no existing file).');
+				}
+			} else {
+				logger
+					.error('Could not tweet because the image is missing.');
+			}
 		})
 
 	async function tweetCarto(dailyCartoFile){
