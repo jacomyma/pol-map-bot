@@ -25,22 +25,23 @@ export async function prepare_twitter_carto(date, forceMode) {
 		const archiveFolder = `${process.env.DATA_ARCHIVE_FOLDER}/${year}/${month}/${datem}`
 		const publicFolder_thatday = `${process.env.DATA_PUBLIC_FOLDER}/${year}/${month}/${datem}`
 		const publicFolder_current = `${process.env.DATA_PUBLIC_FOLDER}/current`
-		(() => [
+		;[
 			archiveFolder,
 			publicFolder_thatday,
 			publicFolder_current,
-		])().forEach(folder => {
+		].forEach(folder => {
 			if (!fs.existsSync(folder)){
 			    fs.mkdirSync(folder, { recursive: true });
 			}
 		})
+
 
 		// Check if the target file exists.
 		// If so, and if not force mode, then just ship it.
 		const targetFile = `${archiveFolder}/daily-carto.jpg`
 		if (!forceMode && fs.existsSync(targetFile)) {
 			logger
-				.info(`Daily carto saved for the ${year}-${month}-${datem}.`);
+				.info(`Daily carto retrieved for the ${year}-${month}-${datem}.`);
 			return new Promise((resolve, reject) => {
 				logger.once('finish', () => resolve({success:true, file:targetFile, msg:`Daily carto existing for the ${year}-${month}-${datem}.`}));
 				logger.end();
@@ -88,12 +89,7 @@ export async function prepare_twitter_carto(date, forceMode) {
 		try {
 			fs.writeFileSync(targetFile, buffer, "binary")
 			logger
-				.info(`Daily carto saved for the ${year}-${month}-${datem}.`);
-	  
-			return new Promise((resolve, reject) => {
-				logger.once('finish', () => resolve({success:true, file:targetFile, msg:`Daily carto saved in archive for the ${year}-${month}-${datem}.`}));
-				logger.end();					
-		  });
+				.info(`Daily carto archived for the ${year}-${month}-${datem}.`);
 		} catch (error) {
 			logger
 				.error(`Error: the daily carto could not be saved for the ${year}-${month}-${datem}.`);
@@ -104,20 +100,15 @@ export async function prepare_twitter_carto(date, forceMode) {
 		}
 
 		// Save the image in the public repository (that day and current)
-		(() => [
+		;[
 			publicFolder_thatday,
 			// publicFolder_current, // For the moment, not necessary to store the image in current folder
-		])().forEach(folder => {
+		].forEach(folder => {
 			let publicFile = `${folder}/daily-carto.jpg`
 			try {
 				fs.writeFileSync(publicFile, buffer, "binary")
 				logger
-					.info(`Daily carto saved for the ${year}-${month}-${datem}.`);
-		  
-				return new Promise((resolve, reject) => {
-					logger.once('finish', () => resolve({success:true, file:publicFile, msg:`Daily carto saved in ${folder}.`}));
-					logger.end();					
-			  });
+					.info(`Daily carto saved in ${folder}.`);
 			} catch (error) {
 				logger
 					.error(`Error: the daily carto could not be saved in ${folder}.`);
@@ -127,6 +118,11 @@ export async function prepare_twitter_carto(date, forceMode) {
 			  });
 			}
 		})
+
+		return new Promise((resolve, reject) => {
+			logger.once('finish', () => resolve({success:true, file:targetFile, msg:`Daily carto prepared.`}));
+			logger.end();					
+	  });
 	}
 
 	return main();
