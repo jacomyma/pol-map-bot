@@ -1,5 +1,4 @@
-import { createLogger, format, transports } from "winston";
-// import * as fs from "fs";
+import { getLogger } from "./-get-logger.js"
 import { TwitterApi } from 'twitter-api-v2';
 import * as fs from "fs";
 import dotenv from "dotenv";
@@ -7,30 +6,9 @@ import { prepare_twitter_carto } from "./prepare_twitter_carto.js";
 
 dotenv.config();
 
-
-// Prepare the logger
-const logLevels = {
-  fatal: 0,
-  error: 1,
-  warn: 2,
-  info: 3,
-  debug: 4,
-  trace: 5,
-};
-
-const logLevel = "trace"
-
-const logger = createLogger({
-	level: logLevel,
-  levels: logLevels,
-  format: format.combine(format.timestamp(), format.json()),
-  transports: [
-  	new transports.Console(),
-  	new transports.File({ filename: `logs/task_tweet_daily_carto.log` })
-  ],
-});
-logger.on('error', function (err) { console.log("Logger error :(") });
-
+// Logger
+const logger = getLogger(`logs/task_tweet_daily_carto.log`)
+logger.level = "trace"
 logger.info('***** RUN SCRIPT ****');
 
 // MAIN
