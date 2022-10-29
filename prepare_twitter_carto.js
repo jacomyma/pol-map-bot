@@ -22,7 +22,7 @@ export async function prepare_twitter_carto(date, forceMode) {
 
 		// Folders
 		const sourceFolder = `${process.env.DATA_SOURCE_FOLDER}/${year}/${month}/${datem}`
-		const targetFolder = `${process.env.DATA_TARGET_FOLDER}/${year}/${month}/${datem}`
+		const targetFolder = `${process.env.DATA_ARCHIVE_FOLDER}/${year}/${month}/${datem}`
 		if (!fs.existsSync(targetFolder)){
 		    fs.mkdirSync(targetFolder, { recursive: true });
 		}
