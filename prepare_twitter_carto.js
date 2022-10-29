@@ -1,4 +1,4 @@
-import { createLogger, format, transports } from "winston";
+import { getLogger } from "./-get-logger.js"
 import * as fs from "fs";
 import { createCanvas, loadImage, ImageData } from "canvas"
 import dotenv from "dotenv";
@@ -12,29 +12,9 @@ export async function prepare_twitter_carto(date, forceMode) {
 	const month = (1+targetDate.getMonth()).toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping: false})
 	const datem = (targetDate.getDate()).toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping: false})
 
-	// Prepare the logger
-	const logLevels = {
-	  fatal: 0,
-	  error: 1,
-	  warn: 2,
-	  info: 3,
-	  debug: 4,
-	  trace: 5,
-	};
-
-	const logLevel = "trace"
-
-	const logger = createLogger({
-		level: logLevel,
-	  levels: logLevels,
-	  format: format.combine(format.timestamp(), format.json()),
-	  transports: [
-	  	new transports.Console(),
-	  	new transports.File({ filename: `logs/prepare_twitter_carto.log` })
-	  ],
-	});
-
-	logger.on('error', function (err) { console.log("Logger error :(") });
+	// Logger
+	const logger = getLogger(`logs/prepare_twitter_carto.log`)
+	logger.level = "trace"
 
 	// MAIN
 	async function main() {
