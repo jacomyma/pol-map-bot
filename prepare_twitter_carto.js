@@ -22,14 +22,22 @@ export async function prepare_twitter_carto(date, forceMode) {
 
 		// Folders
 		const sourceFolder = `${process.env.DATA_SOURCE_FOLDER}/${year}/${month}/${datem}`
-		const targetFolder = `${process.env.DATA_ARCHIVE_FOLDER}/${year}/${month}/${datem}`
-		if (!fs.existsSync(targetFolder)){
-		    fs.mkdirSync(targetFolder, { recursive: true });
-		}
+		const archiveFolder = `${process.env.DATA_ARCHIVE_FOLDER}/${year}/${month}/${datem}`
+		const publicFolder_thatday = `${process.env.DATA_PUBLIC_FOLDER}/${year}/${month}/${datem}`
+		const publicFolder_current = `${process.env.DATA_PUBLIC_FOLDER}/current`
+		(() => [
+			archiveFolder,
+			publicFolder_thatday,
+			publicFolder_current,
+		])().forEach(folder => {
+			if (!fs.existsSync(folder)){
+			    fs.mkdirSync(folder, { recursive: true });
+			}
+		})
 
 		// Check if the target file exists.
 		// If so, and if not force mode, then just ship it.
-		const targetFile = `${targetFolder}/daily-carto.jpg`
+		const targetFile = `${archiveFolder}/daily-carto.jpg`
 		if (!forceMode && fs.existsSync(targetFile)) {
 			logger
 				.info(`Daily carto saved for the ${year}-${month}-${datem}.`);
@@ -73,43 +81,53 @@ export async function prepare_twitter_carto(date, forceMode) {
 		  });
 		}
 
-		// Save the image in the target repository
-
-		let buffer = canvas.toBuffer('image/jpeg')
+		// Get image buffer
+		const buffer = canvas.toBuffer('image/jpeg')
+		
+		// Save the image in the archive repository
 		try {
 			fs.writeFileSync(targetFile, buffer, "binary")
 			logger
 				.info(`Daily carto saved for the ${year}-${month}-${datem}.`);
 	  
 			return new Promise((resolve, reject) => {
-				logger.once('finish', () => resolve({success:true, file:targetFile, msg:`Daily carto saved for the ${year}-${month}-${datem}.`}));
+				logger.once('finish', () => resolve({success:true, file:targetFile, msg:`Daily carto saved in archive for the ${year}-${month}-${datem}.`}));
 				logger.end();					
 		  });
 		} catch (error) {
 			logger
 				.error(`Error: the daily carto could not be saved for the ${year}-${month}-${datem}.`);
 			return new Promise((resolve, reject) => {
-				logger.once('finish', () => resolve({success:false, msg:`An error occurred when saving the PNG for the ${year}-${month}-${datem}.`}));
+				logger.once('finish', () => resolve({success:false, msg:`An error occurred when saving the daily carto in archive for the ${year}-${month}-${datem}.`}));
 				logger.end();
 		  });
 		}
+
+		// Save the image in the public repository (that day and current)
+		(() => [
+			publicFolder_thatday,
+			// publicFolder_current, // For the moment, not necessary to store the image in current folder
+		])().forEach(folder => {
+			let publicFile = `${folder}/daily-carto.jpg`
+			try {
+				fs.writeFileSync(publicFile, buffer, "binary")
+				logger
+					.info(`Daily carto saved for the ${year}-${month}-${datem}.`);
+		  
+				return new Promise((resolve, reject) => {
+					logger.once('finish', () => resolve({success:true, file:publicFile, msg:`Daily carto saved in ${folder}.`}));
+					logger.end();					
+			  });
+			} catch (error) {
+				logger
+					.error(`Error: the daily carto could not be saved in ${folder}.`);
+				return new Promise((resolve, reject) => {
+					logger.once('finish', () => resolve({success:false, msg:`An error occurred when saving the daily carto in ${folder}.`}));
+					logger.end();
+			  });
+			}
+		})
 	}
 
 	return main();
-}
-
-// Command line arguments
-// Date argument
-let date = undefined
-const dateArgRegexp = /d(ate)?=([0-9]{4}\-[0-9]{2}\-[0-9]{2})/i
-process.argv.forEach(d => {
-	let found = d.match(dateArgRegexp)
-	if (found && found[2]) {
-		date = found[2]
-	}
-})
-// Auto mode (run the script)
-if (process.argv.some(d => ["a","-a","auto","-auto"].includes(d))) {
-	console.log("Run script"+((date)?(" on date "+date):("")))
-	prepare_twitter_carto(date)
 }
