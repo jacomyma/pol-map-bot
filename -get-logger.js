@@ -29,8 +29,9 @@ export function getLogger(filename) {
 	  	new winston.transports.Console({
 	      format: winston.format.combine(
 	      	winston.format(obj => {
-	      		obj.message = `${(obj.level.length<5)?" ":""}${obj.timestamp.split(".")[0].replace("T", " ")} ${obj.message}`
+	      		obj.message = `${(obj.level.length<5)?" ":""}${obj.timestamp.split(".")[0].replace("T", " ")}  ${obj.message}`
 	      		delete obj.timestamp
+	      		delete obj.context
 	      		return obj
 	      	})(),
 	        winston.format.colorize(),
@@ -40,7 +41,6 @@ export function getLogger(filename) {
 	  	new winston.transports.File({ filename })
 	  ],
 	});
-	logger.on('error', function (err) { console.log("Logger error :(") });
+	logger.on('error', function (err) { console.error("Logger error :(") });
 	return logger
 }
-
