@@ -18,7 +18,7 @@ export async function prepare_twitter_carto(date, forceMode) {
 
 	// MAIN
 	async function main() {
-		logger.info('***** RUN SCRIPT ****');
+		logger.info('***** prepare_twitter_carto ****');
 
 		// Folders
 		const sourceFolder = `${process.env.DATA_SOURCE_FOLDER}/${year}/${month}/${datem}`
