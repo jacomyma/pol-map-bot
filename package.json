@@ -5,6 +5,7 @@
   "type": "module",
   "dependencies": {
     "canvas": "^2.10.1",
+    "d3": "^7.6.1",
     "dotenv": "^16.0.2",
     "fs": "0.0.1-security",
     "twitter-api-v2": "^1.12.8",

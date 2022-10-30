@@ -192,7 +192,12 @@ export async function prepare_key_resources(date, forceMode) {
 		})
 
 		return new Promise((resolve, reject) => {
-			logger.once('finish', () => resolve({success:true, file:targetFile, msg:`Key resources prepared.`}));
+			logger.once('finish', () => resolve({
+				success:true,
+				jpgFile:targetJpgFile,
+				csvFile:targetCsvFile,
+				msg:`Key resources prepared.`,
+			}));
 			logger.end();					
 	  });
 	}

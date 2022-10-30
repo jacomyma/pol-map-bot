@@ -3,6 +3,7 @@ import { TwitterApi } from 'twitter-api-v2';
 import * as fs from "fs";
 import dotenv from "dotenv";
 import { prepare_twitter_carto } from "./prepare_twitter_carto.js";
+import { prepare_key_resources } from "./prepare_key_resources.js";
 
 dotenv.config();
 
@@ -13,7 +14,7 @@ logger.info('***** RUN SCRIPT ****');
 
 // MAIN
 async function main() {
-	let dailyCartoFile
+	let dailyCartoFile, keyResourcesJpgFile, keyResourcesCsvFile
 
 	// Prepare carto
 	prepare_twitter_carto()
@@ -34,10 +35,39 @@ async function main() {
 				.error('Daily carto preparation FAILED (error).');
 		})
 
+		.then(() => prepare_key_resources())
+		.then(result => {
+			if (result.success) {
+				keyResourcesJpgFile = result.jpgFile
+				keyResourcesCsvFile = result.csvFile
+				logger
+					.child({ context: {result} })
+					.info(`Key resources prepared at ${result.file}.`);
+			} else {
+				logger
+					.child({ context: {result} })
+					.error('Key resources preparation FAILED (invalid result).');
+			}
+		}, error => {
+			logger
+				.child({ context: {error} })
+				.error('Key resources preparation FAILED (error).');
+		})
+
 		.then(() => {
 			if (dailyCartoFile) {
 				if (fs.existsSync(dailyCartoFile)) {
-					return tweetCarto(dailyCartoFile)
+					if (keyResourcesJpgFile && keyResourcesCsvFile) {
+						if (fs.existsSync(keyResourcesJpgFile) && fs.existsSync(keyResourcesCsvFile)) {
+							return //tweetCarto(dailyCartoFile)
+						} else {
+							logger
+								.error('Could not tweet because at least one of the key resources paths is invalid (no existing file).');
+						}
+					} else {
+						logger
+							.error('Could not tweet because the key resources are missing (or one of the 2 files).');
+					}
 				} else {
 					logger
 						.error('Could not tweet because the image path is invalid (no existing file).');
