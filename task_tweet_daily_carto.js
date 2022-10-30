@@ -1,5 +1,6 @@
 import { getLogger } from "./-get-logger.js"
 import { TwitterApi } from 'twitter-api-v2';
+import * as d3 from 'd3';
 import * as fs from "fs";
 import dotenv from "dotenv";
 import { prepare_twitter_carto } from "./prepare_twitter_carto.js";
@@ -42,7 +43,7 @@ async function main() {
 				keyResourcesCsvFile = result.csvFile
 				logger
 					.child({ context: {result} })
-					.info(`Key resources prepared at ${result.file}.`);
+					.info(`Key resources prepared at ${result.jpgFile} and ${result.csvFile}.`);
 			} else {
 				logger
 					.child({ context: {result} })
@@ -59,7 +60,7 @@ async function main() {
 				if (fs.existsSync(dailyCartoFile)) {
 					if (keyResourcesJpgFile && keyResourcesCsvFile) {
 						if (fs.existsSync(keyResourcesJpgFile) && fs.existsSync(keyResourcesCsvFile)) {
-							return //tweetCarto(dailyCartoFile)
+							return tweetDailyThread(dailyCartoFile, keyResourcesJpgFile, keyResourcesCsvFile)
 						} else {
 							logger
 								.error('Could not tweet because at least one of the key resources paths is invalid (no existing file).');
@@ -78,6 +79,87 @@ async function main() {
 			}
 		})
 
+	async function tweetDailyThread(dailyCartoFile, keyResourcesJpgFile, keyResourcesCsvFile){
+		/// Build the tweets
+		let targetDate = new Date() // Today
+		targetDate.setDate(targetDate.getDate() - 1); // Yesterday
+		const yyear = targetDate.getFullYear()
+		const ymonth = (1+targetDate.getMonth()).toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping: false})
+		const ydatem = (targetDate.getDate()).toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping: false})
+		const keyResourcesMessage = `Ressources clés d'hier. Chaque ressource est la plus échangée dans sa zone du débat politique le ${yyear}-${ymonth}-${ydatem}.`
+		// Load key resources file
+		let keyResourcesList
+		try {
+			const csvString = fs.readFileSync(keyResourcesCsvFile, "utf8")
+			keyResourcesList = d3.csvParse(csvString);
+			logger
+				.child({ context: {keyResourcesCsvFile} })
+				.info('CSV file loaded');
+		} catch (error) {
+			logger
+				.child({ context: {keyResourcesCsvFile, error:error.message} })
+				.error('The CSV file could not be loaded: '+keyResourcesCsvFile);
+			return
+		}
+		// Build key resources messages
+		const resourcesMessages = keyResourcesList.map(res => {
+			return `${res.rank}. ${res.url}`
+		})
+
+		/// Tweet!
+		const userClient = new TwitterApi({
+		  appKey: process.env.CONSUMER_KEY,
+		  appSecret: process.env.CONSUMER_SECRET,
+		  accessToken: process.env.ACCESS_TOKEN,
+		  accessSecret: process.env.ACCESS_TOKEN_SECRET,
+		});
+		const rwClient = userClient.readWrite
+
+		let result
+		try {
+			// Upload media for daily carto
+			const mediaIds = await Promise.all([
+			  rwClient.v1.uploadMedia(dailyCartoFile),
+			  rwClient.v1.uploadMedia(keyResourcesJpgFile),
+			  // Note: add media if needed
+			]);
+
+			let tweets = [
+				{text:"", media:{media_ids: [mediaIds[0]]}},
+				{text:keyResourcesMessage, media:{media_ids: [mediaIds[1]]}},
+			].concat(resourcesMessages.map(txt => {return {text:txt}}))
+			
+			// https://github.com/plhery/node-twitter-api-v2/blob/master/doc/v2.md#Postathreadoftweets
+			result = await rwClient.v2.tweetThread(tweets)
+			logger
+				.child({ context: {result} })
+				.info('The bot tweeted successfully.');
+				
+		} catch (error) {
+			logger
+				.child({ context: {error} })
+				.error('ERROR: Could not tweet.');
+			return {success:false, msg:`Task failed: tweet daily carto.`}
+		}
+		
+		// Save result as JSON next to the daily carto File
+		const resultFile = dailyCartoFile.substring(0, dailyCartoFile.lastIndexOf(".")) + "-result.json"
+  	const resultString = JSON.stringify(result)
+		try {
+			fs.writeFileSync(resultFile, resultString)
+			logger
+				.child({ context: {resultFile} })
+				.debug('Daily carto result file saved successfully.');
+		} catch(error) {
+			logger
+				.child({ context: {resultFile, error} })
+				.error(`The daily carto result file could not be saved.`);
+		}
+
+		return {success:true, msg:`Task succesful: tweet daily thread.`}
+	}
+
+	// OBSOLETE
 	async function tweetCarto(dailyCartoFile){
 		// Tweet!
 		const userClient = new TwitterApi({
@@ -125,7 +207,6 @@ async function main() {
 
 		return {success:true, msg:`Task succesful: tweet daily carto.`}
 	}
-
 }
 
 main();
