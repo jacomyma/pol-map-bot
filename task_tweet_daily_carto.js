@@ -58,6 +58,7 @@ async function main() {
 		});
 		const rwClient = userClient.readWrite
 
+		let result
 		try {
 			// Upload media
 			const mediaIds = await Promise.all([
@@ -67,7 +68,7 @@ async function main() {
 			]);
 
 			// https://github.com/PLhery/node-twitter-api-v2/blob/master/doc/v2.md#Createatweet
-			const result = await rwClient.v2.tweet({text:"", media:{media_ids: mediaIds}})
+			result = await rwClient.v2.tweet({text:"", media:{media_ids: mediaIds}})
 			logger
 				.child({ context: {result} })
 				.info('The bot tweeted successfully.');
@@ -75,9 +76,24 @@ async function main() {
 			logger
 				.child({ context: {error} })
 				.error('ERROR: Could not tweet.');
+			return {success:false, msg:`Task failed: tweet daily carto.`}
 		}
-				
-		return {success:true, msg:`Task succesful: tweet test.`}
+		
+		// Save result as JSON next to the daily carto File
+		const resultFile = dailyCartoFile.substring(0, dailyCartoFile.lastIndexOf(".")) + "-result.json"
+  	const resultString = JSON.stringify(result)
+		try {
+			fs.writeFileSync(resultFile, resultString)
+			logger
+				.child({ context: {id, resultFile} })
+				.debug('Daily carto result file saved successfully.');
+		} catch(error) {
+			logger
+				.child({ context: {id, resultFile, error} })
+				.error(`The daily carto result file could not be saved.`);
+		}
+
+		return {success:true, msg:`Task succesful: tweet daily carto.`}
 	}
 
 }
