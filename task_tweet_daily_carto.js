@@ -36,7 +36,7 @@ async function main() {
 				.error('Daily carto preparation FAILED (error).');
 		})
 
-		.then(() => prepare_key_resources())
+		/*.then(() => prepare_key_resources())
 		.then(result => {
 			if (result.success) {
 				keyResourcesJpgFile = result.jpgFile
@@ -53,22 +53,22 @@ async function main() {
 			logger
 				.child({ context: {error} })
 				.error('Key resources preparation FAILED (error).');
-		})
+		})*/
 
 		.then(() => {
 			if (dailyCartoFile) {
 				if (fs.existsSync(dailyCartoFile)) {
-					if (keyResourcesJpgFile && keyResourcesCsvFile) {
-						if (fs.existsSync(keyResourcesJpgFile) && fs.existsSync(keyResourcesCsvFile)) {
+					// if (keyResourcesJpgFile && keyResourcesCsvFile) {
+					// 	if (fs.existsSync(keyResourcesJpgFile) && fs.existsSync(keyResourcesCsvFile)) {
 							return tweetDailyThread(dailyCartoFile, keyResourcesJpgFile, keyResourcesCsvFile)
-						} else {
-							logger
-								.error('Could not tweet because at least one of the key resources paths is invalid (no existing file).');
-						}
-					} else {
-						logger
-							.error('Could not tweet because the key resources are missing (or one of the 2 files).');
-					}
+					// 	} else {
+					// 		logger
+					// 			.error('Could not tweet because at least one of the key resources paths is invalid (no existing file).');
+					// 	}
+					// } else {
+					// 	logger
+					// 		.error('Could not tweet because the key resources are missing (or one of the 2 files).');
+					// }
 				} else {
 					logger
 						.error('Could not tweet because the image path is invalid (no existing file).');
@@ -86,6 +86,7 @@ async function main() {
 		const yyear = targetDate.getFullYear()
 		const ymonth = (1+targetDate.getMonth()).toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping: false})
 		const ydatem = (targetDate.getDate()).toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping: false})
+		/*
 		const keyResourcesMessage = `Ressources clés d'hier. Chaque ressource est la plus échangée dans sa zone du débat politique le ${yyear}-${ymonth}-${ydatem}.`
 		// Load key resources file
 		let keyResourcesList
@@ -105,7 +106,7 @@ async function main() {
 		const resourcesMessages = keyResourcesList.map(res => {
 			return `${res.rank}. ${res.url}`
 		})
-
+		*/
 		/// Tweet!
 		const userClient = new TwitterApi({
 		  appKey: process.env.CONSUMER_KEY,
@@ -120,14 +121,14 @@ async function main() {
 			// Upload media for daily carto
 			const mediaIds = await Promise.all([
 			  rwClient.v1.uploadMedia(dailyCartoFile),
-			  rwClient.v1.uploadMedia(keyResourcesJpgFile),
+			  // rwClient.v1.uploadMedia(keyResourcesJpgFile),
 			  // Note: add media if needed
 			]);
 
 			let tweets = [
 				{text:"", media:{media_ids: [mediaIds[0]]}},
-				{text:keyResourcesMessage, media:{media_ids: [mediaIds[1]]}},
-			].concat(resourcesMessages.map(txt => {return {text:txt}}))
+				// {text:keyResourcesMessage, media:{media_ids: [mediaIds[1]]}},
+			]//.concat(resourcesMessages.map(txt => {return {text:txt}}))
 			
 			// https://github.com/plhery/node-twitter-api-v2/blob/master/doc/v2.md#Postathreadoftweets
 			result = await rwClient.v2.tweetThread(tweets)
