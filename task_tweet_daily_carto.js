@@ -121,17 +121,10 @@ async function main() {
 			// Upload media for daily carto
 			const mediaIds = await Promise.all([
 			  rwClient.v1.uploadMedia(dailyCartoFile),
-			  // rwClient.v1.uploadMedia(keyResourcesJpgFile),
 			  // Note: add media if needed
 			]);
 
-			let tweets = [
-				{text:"", media:{media_ids: [mediaIds[0]]}},
-				// {text:keyResourcesMessage, media:{media_ids: [mediaIds[1]]}},
-			]//.concat(resourcesMessages.map(txt => {return {text:txt}}))
-			
-			// https://github.com/plhery/node-twitter-api-v2/blob/master/doc/v2.md#Postathreadoftweets
-			result = await rwClient.v2.tweetThread(tweets)
+			result = await rwClient.v2.tweet({text:"", media:{media_ids: mediaIds}})
 			logger
 				.child({ context: {result} })
 				.info('The bot tweeted successfully.');
@@ -158,55 +151,6 @@ async function main() {
 		}
 
 		return {success:true, msg:`Task succesful: tweet daily thread.`}
-	}
-
-	// OBSOLETE
-	async function tweetCarto(dailyCartoFile){
-		// Tweet!
-		const userClient = new TwitterApi({
-		  appKey: process.env.CONSUMER_KEY,
-		  appSecret: process.env.CONSUMER_SECRET,
-		  accessToken: process.env.ACCESS_TOKEN,
-		  accessSecret: process.env.ACCESS_TOKEN_SECRET,
-		});
-		const rwClient = userClient.readWrite
-
-		let result
-		try {
-			// Upload media
-			const mediaIds = await Promise.all([
-			  // file path
-			  rwClient.v1.uploadMedia(dailyCartoFile),
-			  // Note: add media if needed
-			]);
-
-			// https://github.com/PLhery/node-twitter-api-v2/blob/master/doc/v2.md#Createatweet
-			result = await rwClient.v2.tweet({text:"", media:{media_ids: mediaIds}})
-			logger
-				.child({ context: {result} })
-				.info('The bot tweeted successfully.');
-		} catch (error) {
-			logger
-				.child({ context: {error} })
-				.error('ERROR: Could not tweet.');
-			return {success:false, msg:`Task failed: tweet daily carto.`}
-		}
-		
-		// Save result as JSON next to the daily carto File
-		const resultFile = dailyCartoFile.substring(0, dailyCartoFile.lastIndexOf(".")) + "-result.json"
-  	const resultString = JSON.stringify(result)
-		try {
-			fs.writeFileSync(resultFile, resultString)
-			logger
-				.child({ context: {id, resultFile} })
-				.debug('Daily carto result file saved successfully.');
-		} catch(error) {
-			logger
-				.child({ context: {id, resultFile, error} })
-				.error(`The daily carto result file could not be saved.`);
-		}
-
-		return {success:true, msg:`Task succesful: tweet daily carto.`}
 	}
 }
 
