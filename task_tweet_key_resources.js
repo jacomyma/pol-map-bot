@@ -94,11 +94,12 @@ async function main() {
 			  }
 			  text += "…"
 			}
-			let type = res.type*/
-			if (type == "tweet") { type = "tweet"}
-			if (type == "url") { type = "page web"}
+			*/
+			let type = res.type
+			if (type == "tweet") { type = "Tweet"}
+			if (type == "url") { type = "Page web"}
 			// Build tweet text
-			return `Ressource ${res.rank} (${type}):\n${res.url}`
+			return `${res.rank}. ${type}:\n${res.url}`
 		})
 
 		/// Tweet!
