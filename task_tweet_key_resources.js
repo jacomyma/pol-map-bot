@@ -57,7 +57,7 @@ async function main() {
 		const yyear = targetDate.getFullYear()
 		const ymonth = (1+targetDate.getMonth()).toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping: false})
 		const ydatem = (targetDate.getDate()).toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping: false})
-		const keyResourcesMessage = `Ressources clés d'hier. Chaque ressource est la plus échangée dans sa zone du débat politique le ${yyear}-${ymonth}-${ydatem}.`
+		let keyResourcesMessage = `Ressource la + échangée dans sa zone du débat le ${yyear}-${ymonth}-${ydatem}:\n`
 		// Load key resources file
 		let keyResourcesList
 		try {
@@ -73,34 +73,9 @@ async function main() {
 			return
 		}
 		// Build key resources messages
-		const resourcesMessages = keyResourcesList.map(res => {
-			/*
-			// Feature resource text shapshot
-			let text = res.text
-			// Replace line breaks by spaces
-			text = text.replace("\n", " ")
-			text = text.replace("\r", " ")
-			text = text.replace("\t", " ")
-			// Remove URLs
-			text = text.replace(/(?:https?|ftp):\/\/[\n\S]+/g, '')
-			// Replace multiple spaces by single ones
-			text = text.replace(/ +/gi, ' ')
-			// Truncate if necessary
-			const maxLength = 230
-			if (text.length > maxLength) {
-				text += " "
-				while (text.length > maxLength) {
-			  	text = text.substr(0, Math.min(text.length, text.lastIndexOf(" ")))
-			  }
-			  text += "…"
-			}
-			*/
-			let type = res.type
-			if (type == "tweet") { type = "Tweet"}
-			if (type == "url") { type = "Page web"}
-			// Build tweet text
-			return `${res.rank}. ${type}:\n${res.url}`
-		})
+		keyResourcesMessage += keyResourcesList.map(res => {
+			return `${res.rank}. ${res.url}`
+		}).join("\n")
 
 		/// Tweet!
 		const userClient = new TwitterApi({
@@ -119,12 +94,8 @@ async function main() {
 			  // Note: add media if needed
 			]);
 
-			let tweets = [
-				{text:keyResourcesMessage, media:{media_ids: [mediaIds[0]]}},
-			].concat(resourcesMessages.map(txt => {return {text:txt}}))
-			
 			// https://github.com/plhery/node-twitter-api-v2/blob/master/doc/v2.md#Postathreadoftweets
-			result = await rwClient.v2.tweetThread(tweets)
+			result = await rwClient.v2.tweet({text:keyResourcesMessage, media:{media_ids: mediaIds}})
 			logger
 				.child({ context: {result} })
 				.info('The bot tweeted successfully.');
